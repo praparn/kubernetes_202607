@@ -13,7 +13,7 @@ Part0: Create Dashboard
 	helm list			==> Expect blank
     (Remark: Case to rollback and reinitial helm: helm reset --force)
 
-3. Helm install kubernetes dashboard by command:
+3. Helm install kubernetes headlamp by command:
     helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
     helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
 	
