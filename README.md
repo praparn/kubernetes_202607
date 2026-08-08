@@ -1,0 +1,1 @@
+Kubernetes Orchestrator Workshop - updated for Kubernetes 1.36 with all new feature enhancements

@@ -1,0 +1,12 @@
+# Apache APISIX + Ingress Controller (Gateway API mode)
+# NodePort exposure - for standalone Workshop 2.3 (single-node / lab cluster)
+service:
+  type: NodePort
+
+ingress-controller:
+  enabled: true
+  gatewayProxy:
+    createDefault: true
+  config:
+    kubernetes:
+      enableGatewayAPI: true

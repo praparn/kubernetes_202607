@@ -1,0 +1,78 @@
+Instruction for Workshop 2.1_Job_CronJob:
+Note: This instruction will demonstrate about how to manage use job and cronjob:
+====================================================
+Create Parallel Job for access redis and pull:
+====================================================
+1. Get command prompt for access folder workshop 2.1 by command :cd /xxxx/WorkShop_2.1_Job_CronJob
+2. Check File on WorkShop by command: "cd ~"
+3. Create Redis and Redis's service by command:
+  kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/redis-pods.yml
+  kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/redis-service.yml
+
+4. Check redis pods and service by command:
+  kubectl get pods
+  kubectl get svc
+
+5. Run redis-cli and prepare vaule on redis by command:
+  kubectl exec -it redis-master -- sh
+
+  -------------
+  Pods's inside
+  -------------
+  redis-cli -h redis
+  redis:6379> rpush job2 "BTC" "ETH" "USDT" "BNB" "SOL" "USDC" "XRP" "DOGE" "TON"
+  (integer) 1
+  redis:6379> lrange job2 0 -1
+  -------------
+  exit
+  exit
+
+ 6. Run job by command:
+  kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/job-parallel.yml
+  kubectl describe jobs/job-parallel
+  kubectl get job
+
+ 7. View log from job by command:
+  kubectl get pods
+  kubectl logs pods/<pods name>
+ 
+
+ 8. CleanUp lab:
+  kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/job-parallel.yml
+  kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/redis-pods.yml
+  kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.1_Job_CronJob/parallelism/redis-service.yml
+====================================================
+Create Job/CronJob for notify to Slack (Free Plan):
+====================================================
+1. Prepare slack workspace and incoming webhook (one-time setup):
+  1.1 Create free slack workspace (or use existing) at: https://slack.com/get-started
+      *Remark: Free (non-commercial) plan is enough for incoming webhook
+  1.2 Create slack app at: https://api.slack.com/apps ==> "Create New App" ==> "From scratch"
+      ==> App Name: "k8s-notify" ==> Pick your workspace ==> "Create App"
+  1.3 On app page select "Incoming Webhooks" ==> Toggle "Activate Incoming Webhooks" to On
+      ==> "Add New Webhook to Workspace" ==> Select channel (Example: #general) ==> "Allow"
+  1.4 Copy "Webhook URL" (Format: https://hooks.slack.com/services/TXXXX/BXXXX/XXXXXXXX)
+
+2. Create secret for keep webhook url by command:
+  kubectl create secret generic slack-webhook --from-literal=url='<Your Webhook URL from 1.4>'
+  kubectl get secret slack-webhook
+
+3. Run one-time notify job by command:
+  kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/main/WorkShop_2.1_Job_CronJob/job_notify_slack.yml
+  kubectl get job
+  kubectl get pods
+
+4. Check message on your slack channel (Example: #general)
+  *Remark: Job and pods will auto-delete in 30 second after finish (ttlSecondsAfterFinished: 30)
+
+5. Run cronjob for notify every 1 minute by command:
+  kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/main/WorkShop_2.1_Job_CronJob/cronjob_notify_slack.yml
+  kubectl get cronjob
+  watch kubectl get pods
+
+6. Check message on your slack channel every 1 minute (Wait 2 - 3 minute for see result)
+  kubectl get jobs ==> See job history (successfulJobsHistoryLimit: 5)
+
+7. CleanUp lab:
+  kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/main/WorkShop_2.1_Job_CronJob/cronjob_notify_slack.yml
+  kubectl delete secret slack-webhook

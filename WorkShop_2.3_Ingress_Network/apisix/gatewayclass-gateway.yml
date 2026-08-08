@@ -1,0 +1,53 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: apisix
+spec:
+  controllerName: apisix.apache.org/apisix-ingress-controller
+---
+# Gateway must live in the same namespace as the "apisix-config" GatewayProxy
+# that Helm auto-creates (ingress-controller.gatewayProxy.createDefault=true),
+# since infrastructure.parametersRef only resolves within the same namespace.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: apisix
+  namespace: apisix
+spec:
+  gatewayClassName: apisix
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-webtest1
+    protocol: HTTPS
+    port: 443
+    hostname: webtest1.kuberneteslabthailand.com
+    tls:
+      certificateRefs:
+      - kind: Secret
+        name: webtest1secret
+        namespace: default
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-webtest2
+    protocol: HTTPS
+    port: 443
+    hostname: webtest2.kuberneteslabthailand.com
+    tls:
+      certificateRefs:
+      - kind: Secret
+        name: webtest2secret
+        namespace: default
+    allowedRoutes:
+      namespaces:
+        from: All
+  infrastructure:
+    parametersRef:
+      group: apisix.apache.org
+      kind: GatewayProxy
+      name: apisix-config

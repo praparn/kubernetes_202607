@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: job-parallel-cron
+  labels:
+    name: job-parallel-cron
+    owner: Praparn_L
+    version: "1.0"
+    module: Job
+    environment: development
+spec:
+  schedule: "*/1 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          activeDeadlineSeconds: 45
+          containers:
+            - name: job-parallel-cron
+              image: labdocker/redis:worker-test
+          restartPolicy: Never

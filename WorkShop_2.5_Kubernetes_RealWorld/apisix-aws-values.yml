@@ -1,0 +1,16 @@
+# Apache APISIX + Ingress Controller (Gateway API mode)
+# LoadBalancer exposure via AWS NLB - for Workshop 2.5 real-world multi-node cluster
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+
+ingress-controller:
+  enabled: true
+  gatewayProxy:
+    createDefault: true
+  config:
+    kubernetes:
+      enableGatewayAPI: true

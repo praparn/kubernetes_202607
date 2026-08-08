@@ -1,0 +1,147 @@
+Instruction for Workshop 2.3 Ingress Network:
+Note: This instruction will start lab for kubernetes for ingress workshop, using the Kubernetes Gateway API
+standard with Apache APISIX as the implementation. NGINX Ingress Controller has been retired (no more
+releases/security patches since March 2026) and is no longer covered by this workshop.
+--------------------------------------------------------------------------
+0. (Master) Install Gateway API CRDs (required before installing any Gateway API implementation):
+	kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+	kubectl get gatewayclass
+
+1. (Master) Install Apache APISIX with the Ingress Controller in Gateway API mode by command:
+	*Remark: in case you never install helm before please follow command below as pre-require:
+		curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh
+
+	helm repo add apisix https://apache.github.io/apisix-helm-chart
+	helm repo update
+	helm install apisix apisix/apisix -n apisix --create-namespace -f ~/kubernetes_202607/WorkShop_2.3_Ingress_Network/apisix/apisix-values.yml
+
+2. (Master) Check running pods and service, record the NodePort assigned for HTTP by command:
+	kubectl get pods -n apisix
+	kubectl get svc -n apisix		==> Record NodePort for "apisix-gateway" service (port 80 -> <NodePort>)
+	========================================
+	Example:
+	NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+	apisix-gateway    NodePort   10.110.87.52   <none>        80:30074/TCP,443:30761/TCP   9s
+	========================================
+
+3. (Master) Create GatewayClass, Gateway (with HTTP + per-host HTTPS listeners) and the ReferenceGrant that
+   lets the Gateway (namespace "apisix") use TLS secrets stored in "default" by command:
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass-gateway.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest2.yml
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/referencegrant-tls-secrets.yml
+
+	kubectl get gateway -n apisix
+	kubectl describe gateway/apisix -n apisix		==> Expect all listeners "Programmed: True"
+
+4. Create Service/Pods/Deployment for webtest1 and webtest2 by command:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml
+
+5. View service for connection by command:
+	kubectl get svc -o wide
+
+6. Try to connect for each service via curl by command:
+	kubectl run curl --image=radial/busyboxplus:curl -i --tty
+	curl http://webtest1
+	curl http://webtest2
+	exit
+
+7. Create HTTPRoute for access (plain HTTP) by command:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+	kubectl get httproute
+	kubectl describe httproute/webtest1-httproute
+	kubectl describe httproute/webtest2-httproute
+
+8. Check Your Public IP Address by command:
+	curl https://ifconfig.me/
+
+9. Add Hosts (/etc/hosts) or (c:\windows\system32\driver\etc\hosts) with node IP by command:
+	For Windows:
+		<Public IP> webtest1.kuberneteslabthailand.com webtest2.kuberneteslabthailand.com
+
+	For Mac:
+	echo "<Public IP> webtest1.kuberneteslabthailand.com webtest2.kuberneteslabthailand.com" | sudo tee -a /private/etc/hosts
+
+10. Test access website by browser:
+	http://webtest1.kuberneteslabthailand.com:<NodePort from step 2>
+	http://webtest2.kuberneteslabthailand.com:<NodePort from step 2>
+
+	*Remark: We can test with curl in lab machine by command:
+	curl http://<Public IP>:<NodePort> -H 'Host:webtest1.kuberneteslabthailand.com'
+	curl http://<Public IP>:<NodePort> -H 'Host:webtest2.kuberneteslabthailand.com'
+
+11. Delete Existing HTTPRoute by command (before moving to TLS test):
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+
+--------------------------------------------------------------------------
+TLS test (certs already loaded onto the Gateway's HTTPS listeners in step 3)
+--------------------------------------------------------------------------
+12. Recreate the HTTPRoutes (same files - the Gateway's HTTPS listeners pick them up automatically since
+    they share the same hostnames as the HTTP listener):
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+	kubectl get svc -n apisix		==> Record NodePort for HTTPS (443 -> <NodePort>)
+
+13. Test access website by browser:
+	https://webtest1.kuberneteslabthailand.com:<HTTPS NodePort>
+	https://webtest2.kuberneteslabthailand.com:<HTTPS NodePort>
+
+	*Remark: We can test with curl in lab machine by command:
+	curl https://webtest1.kuberneteslabthailand.com:<HTTPS NodePort> --resolve webtest1.kuberneteslabthailand.com:<HTTPS NodePort>:<Public IP> -k
+	curl https://webtest2.kuberneteslabthailand.com:<HTTPS NodePort> --resolve webtest2.kuberneteslabthailand.com:<HTTPS NodePort>:<Public IP> -k
+
+14. Clean Up Lab:
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+
+--------------------------------------------------------------------------
+Key Authentication with APISIX (Gateway API PluginConfig + Consumer)
+--------------------------------------------------------------------------
+15. Recreate plain HTTPRoutes so we have a working baseline first:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+
+16. Test access website by browser (expect success, no auth required yet):
+	http://webtest1.kuberneteslabthailand.com:<NodePort>
+	http://webtest2.kuberneteslabthailand.com:<NodePort>
+
+	*Remark: We can test with curl in lab machine by command:
+	curl http://<Public IP>:<NodePort> -H 'Host:webtest1.kuberneteslabthailand.com'
+	curl http://<Public IP>:<NodePort> -H 'Host:webtest2.kuberneteslabthailand.com'
+
+17. Create key-auth PluginConfig by command:
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-pluginconfig.yml
+
+18. Enable key-auth for both routes by re-applying the "-auth" HTTPRoute variants
+    (these are the same routes with an added ExtensionRef filter pointing at the PluginConfig):
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1-auth.yml
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2-auth.yml
+
+19. ReTest access website by browser: (Expect Fail 401 Unauthorized)
+	http://webtest1.kuberneteslabthailand.com:<NodePort>
+	http://webtest2.kuberneteslabthailand.com:<NodePort>
+
+	*Remark: We can test with curl in lab machine by command:
+	curl -i http://<Public IP>:<NodePort> -H 'Host:webtest1.kuberneteslabthailand.com'
+	curl -i http://<Public IP>:<NodePort> -H 'Host:webtest2.kuberneteslabthailand.com'
+
+20. Create Secret and Consumer for authentication by command:
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-secret.yml
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-consumer.yml
+
+21. ReTest access website test again with apikey header. Expect Success (200):
+	curl -i -H 'apikey: nd-6e^<vHSZa$3B/cYXuDN9K#8UzR?%s' http://<Public IP>:<NodePort> -H 'Host:webtest1.kuberneteslabthailand.com'
+	curl -i -H 'apikey: nd-6e^<vHSZa$3B/cYXuDN9K#8UzR?%s' http://<Public IP>:<NodePort> -H 'Host:webtest2.kuberneteslabthailand.com'
+
+22. CleanUp Lab
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-consumer.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-secret.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-jarvis-pluginconfig.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1-auth.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2-auth.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml
+	kubectl delete pods/curl

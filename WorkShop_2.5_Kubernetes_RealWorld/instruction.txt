@@ -1,0 +1,359 @@
+Instruction for Workshop 2.5 Kubernetes in RealWorld:
+Note: This instruction will start lab for kubernetes's cluster for real workshop:
+
+0. Reinitial your machine before grouping with your friend by command: (Run slowly step-by-step)
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.5_Kubernetes_RealWorld/apisix-gatewayclass-gateway.yml
+	helm uninstall apisix --namespace apisix
+	kubectl delete namespace apisix
+	helm uninstall kubernetes-dashboard --namespace kubernetes-dashboard
+	kubectl delete namespace kubernetes-dashboard
+	sudo cp /etc/kubernetes/manifests/kube-apiserver-original.yaml /etc/kubernetes/manifests/kube-apiserver.yaml 
+	cilium hubble disable
+    cilium uninstall --wait
+	sudo su -
+    kubeadm reset					==> answer: y (Remark: may found some DeadlineExceeded for stop all running pods)
+	rm -rf /var/lib/etcd
+	rm -rf /home/ubuntu/.kube
+	rm -rf /etc/kubernetes
+	ctr -n k8s.io i rm $(ctr -n k8s.io i ls -q)
+	reboot
+
+	*Optional1: For clean workshop and initial lab*
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	cd ~
+	rm -rf kubernetes_202607/
+	git clone https://github.com/praparn/kubernetes_202607.git
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	*Optional2: Check for module enable (IF not run script below for enable)
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    sudo lsmod | grep -e nf_tables -e nf_conntrack
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    *Optional3: Check and reinstall cilium binary
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    #Cilium Cli
+    curl -L --remote-name-all https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz{,.sha256sum}
+    sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
+    sudo tar xzvfC cilium-linux-amd64.tar.gz /usr/local/bin
+    rm cilium-linux-amd64.tar.gz{,.sha256sum}
+
+    #Hubble Cli
+    export HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
+    curl -L --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-amd64.tar.gz{,.sha256sum}
+    sha256sum --check hubble-linux-amd64.tar.gz.sha256sum
+    sudo tar xzvfC hubble-linux-amd64.tar.gz /usr/local/bin
+    rm hubble-linux-amd64.tar.gz{,.sha256sum}
+	------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. Check "LAB" sheet for your group and inform your team for all node information like below:
+====================================================
+Lab Description: (Check you excel sheet)
+ClusterName: XXXXX
+CA-Cert-Hash: XXXXX
+Token: XXXXX
+Ingress CNAME: XXXXX
+
+Machine name		            			Roles:			IP Address: (Private)		IP Address: (Public)			Hostname
+Training_DockerZerotoHero_StudentGX_1	   	Master			10.200.X.X					X.X.X.X							ip-10-200-X-X.ap-southeast-1.compute.internal
+Training_DockerZerotoHero_StudentGX_2       NodePort		10.200.X.X					X.X.X.X							ip-10-200-X-X.ap-southeast-1.compute.internal
+Training_DockerZerotoHero_StudentGX_3   	NodePort		10.200.X.X					X.X.X.X							ip-10-200-X-X.ap-southeast-1.compute.internal
+===================================================
+(export environment)
+  export ClusterName=<clustername>
+  export HostnameMaster1=<hostname master1>
+  export HostnameWorker1=<hostname worker1>
+  export HostnameWorker2=<hostname worker2>
+
+  export tokenid=<tokenid>   #export this after master node had been initial
+  export cacerhash=<CA-Cert-Hash>   #export this after master node had been initial
+===================================================
+0. Follow document pdf for access ssh (Windows/MACOS)
+
+1. (all node) SSH/Putty to target machine with command below:
+ssh -i docker_lab ubuntu@<Public IP Address of Master>
+ssh -i docker_lab ubuntu@<Public IP Address of NodePort1>
+ssh -i docker_lab ubuntu@<Public IP Address of NodePort2>
+
+2. *Optional* (all node) Setup TMUX script and SSH for Share Session:
+sudo apt-get update && sudo apt-get install -y tmux
+tmux new -s Lab
+
+	# Remark: For your co-worker please kindly ssh to target node and join session with command #
+		tmux attach-session -t Lab
+
+3. *Optional* (all node) Check hostname for each node and record on sheet:
+
+4. (Master) Prepare configuration for initial kubernetes master
+    (run export environment)
+	cd ~
+	curl https://raw.githubusercontent.com/praparn/sourcesetup/master/kubernetes_initial/version136/kubeadm-init.yaml > ~/kubeadm-init.yaml
+  	sed -i -e "s/2.2.2.2/$HostnameMaster1/g" ~/kubeadm-init.yaml
+  	sed -i -e "s/hostnamemaster/$HostnameMaster1/g" ~/kubeadm-init.yaml
+  	sed -i -e "s/KubernetesClusterName/$ClusterName/g" ~/kubeadm-init.yaml
+  	more ~/kubeadm-init.yaml
+
+5. (Master) initial cluster by command:
+	sudo su -
+	kubeadm init --config /home/ubuntu/kubeadm-init.yaml
+	exit
+
+	*Remark: Need to record token Output
+    -------------------------------------------------
+    Token output:
+    -------------------------------------------------
+
+You can now join any number of control-plane nodes by copying certificate authorities
+and service account keys on each node and then running the following as root:
+
+  kubeadm join 10.0.1.67:6443 --token 1ogaw7.1dx1qg34qzi6ha5t \
+	--discovery-token-ca-cert-hash sha256:931d6c0f44e2c2558591845ffd95c7fb6ab47e687b83015c2a5b9b229940d786 \
+	--control-plane 
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.0.1.67:6443 --token 1ogaw7.1dx1qg34qzi6ha5t \
+	--discovery-token-ca-cert-hash sha256:931d6c0f44e2c2558591845ffd95c7fb6ab47e687b83015c2a5b9b229940d786 
+	-------------------------------------------------
+
+6. (Master) Setup run cluster system by command (Regular User):
+	mkdir -p $HOME/.kube
+  	sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+	sudo chown $(id -u):$(id -g) $HOME/.kube/config
+	kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+7. (Master) Check nftables mode on kube-proxy by command:
+    kubectl get pods -n kube-system
+    kubectl logs kube-proxy-<XXXX> -n kube-system ==> Expect log line confirming "Using nftables Proxier"
+
+8 (Master) Check nftables rules by command
+	sudo nft list ruleset | head -50
+	-------------------------------------------------
+	Example Result:
+	-------------------------------------------------
+table ip kube-proxy {
+	chain services {
+		type filter hook prerouting priority -110; policy accept;
+		...
+	}
+	chain service-ips {
+		type nat hook prerouting priority -100; policy accept;
+		ip daddr . meta l4proto . th dport vmap @service-ips
+	}
+	chain nodeport-endpoints-...  { ... }
+}
+	-------------------------------------------------
+	*Remark: kube-proxy's IPVS mode was removed in Kubernetes 1.36 (deprecated since 1.35); nftables is now the recommended mode.
+
+9. (Master) Create cilium network component by command:
+    cilium install --set cluster.name=kuberneteslab (Ref: https://github.com/cilium/cilium/issues/34006)
+	cilium status --wait
+	
+10. (Master) Check master readiness and dns by command and enable hubble ui (Take 5 - 10 min):
+	watch kubectl get pods --all-namespaces
+	cilium hubble enable --ui
+	cilium status --wait
+========================================  Install Cloud Controller =============================================================
+11. (Master) Git clone repository of AWS Cloud Controller by command:
+	cd ~ && git clone https://github.com/kubernetes/cloud-provider-aws.git && cd cloud-provider-aws/examples/existing-cluster/base
+
+12. (Master) Create AWS Cloud Controller (DaemonSet) by command:
+	kubectl create -k .
+	cd ~
+
+13. (Master) Verify pods of CLoud Controller by command:
+	kubectl get daemonset -n kube-system
+	kubectl get pods -n kube-system
+
+========================================  Create Dashboard =====================================================================
+### Install Helm ### (If not exceed)
+14. Install helm client on master node by command:
+	curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+   chmod 700 get_helm.sh
+   ./get_helm.sh
+
+15. Check helm readiness and update by command:
+	 helm list			==> Expect blank
+    (Remark: Case to rollback and reinitial helm: helm reset --force)
+
+16. Helm install kubernetes dashboard by command:
+    helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/ && helm repo update
+    helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+	watch kubectl get all -n=kubernetes-dashboard
+
+17. Create Generic-Admin for access by command and relogin again:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_1.7_Resource_Management/user-restrict-admin.yml
+	kubectl describe secret kubernetes-dashboard-admin -n kubernetes-dashboard
+	*Remark: Record Token:
+	Ex:
+	------------------------------------------------------------------------------------
+eyJhbGciOiJSUzI1NiIsImtpZCI6IkZrTkFjN296TUxsbmFfZmU0MklfLVdUdnRjQXFyMWJ1TzFLbWRDckU1YncifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXE1Z2Z2Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI1MmNiZjU3NS02Y2ExLTQ3YzQtOWQwOS0zYzg1ZTlmMTkxOTEiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZXJuZXRlcy1kYXNoYm9hcmQ6YWRtaW4tdXNlciJ9.hNxqxqeLK1JxOzK4OYPLbv7FlumBkHrwjL6lDUulaMEU1Iwy1Gq9cJvrLj5dh7xec86PasEckTq1BZo63zOvGBrvjVqH4tTecepQLiY-H584V7bcaY2Ps6hr21DVQEcU_mrJ47KlPMxCbXwrARHaaTMQHIgM1MXE4e8Zsk1FBXMZR9YfxRivyBgmc77hJbbs7VExf8v5_QdJPmq-lFA2-whu4jK7kJ_wFq8Xh_aiHegKbkl61FwfgByZarZMT_dHkt4CVx5XbyvEYd_MSJH9qD0CFsXa-TKgP0MJhqJwHbI0FXpW_gG3XiKIbTK0yKrE1eCpGyvyNSnGCxdPbwWbTA
+	------------------------------------------------------------------------------------
+
+18. Open Kubernetes's forward for operate:
+	kubectl -n kubernetes-dashboard patch svc kubernetes-dashboard-kong-proxy --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":30010}]'
+	kubectl get svc -n=kubernetes-dashboard
+
+	*Test by open browser: 
+	https://<Public IP>:30010  <== input token on No.4 for test
+
+========================================  Create Dashboard =====================================================================
+
+14. (Worker1) Prepare configuration for initial kubernetes worker:
+(run export environment)
+cd ~
+curl https://raw.githubusercontent.com/praparn/sourcesetup/master/kubernetes_initial/version136/kubeadm-join-worker.yaml > ~/kubeadm-join-worker.yaml
+sed -i -e "s/hostnamelb/$HostnameMaster1/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/token: tokenid/token: $tokenid/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/sha256:cahash/$cacerhash/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/name: hostname/name: $HostnameWorker1/g" ~/kubeadm-join-worker.yaml
+more ~/kubeadm-join-worker.yaml
+
+15. (Worker1) join cluster by command:
+sudo su -
+kubeadm join --config /home/ubuntu/kubeadm-join-worker.yaml
+exit
+htop
+
+16. (Worker2) Prepare configuration for initial kubernetes worker:
+(run export environment)
+cd ~
+curl https://raw.githubusercontent.com/praparn/sourcesetup/master/kubernetes_initial/version136/kubeadm-join-worker.yaml > ~/kubeadm-join-worker.yaml
+sed -i -e "s/hostnamelb/$HostnameMaster1/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/token: tokenid/token: $tokenid/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/sha256:cahash/$cacerhash/g" ~/kubeadm-join-worker.yaml
+sed -i -e "s/name: hostname/name: $HostnameWorker2/g" ~/kubeadm-join-worker.yaml
+more ~/kubeadm-join-worker.yaml
+
+17. (Worker2) join cluster by command:
+sudo su -
+kubeadm join --config /home/ubuntu/kubeadm-join-worker.yaml
+exit
+htop
+
+18. (Master) Check Node in Cluster by command (This take 5 - 10 min):
+watch kubectl get nodes
+
+19. (Master) Add label for node of worker by command:
+kubectl label nodes $HostnameWorker1 node-role.kubernetes.io/worker=
+kubectl label nodes $HostnameWorker2 node-role.kubernetes.io/worker=
+kubectl get nodes
+
+19. (Master)Check Pods from all cluster system running by command:
+watch kubectl get pods --all-namespaces
+
+20. (Master) Check nftables mode on every kube-proxy by command:
+    kubectl get pods -n kube-system -o wide ==> Record kube-proxy name
+    kubectl logs kube-proxy-<XXXX> -n kube-system ==> Expect log line confirming "Using nftables Proxier"
+
+21 (Worker1) Check nftables rules by command
+	sudo nft list ruleset | head -50
+	-------------------------------------------------
+	Example Result:
+	-------------------------------------------------
+table ip kube-proxy {
+	chain services {
+		type filter hook prerouting priority -110; policy accept;
+		...
+	}
+	chain service-ips {
+		type nat hook prerouting priority -100; policy accept;
+		ip daddr . meta l4proto . th dport vmap @service-ips
+	}
+	chain nodeport-endpoints-...  { ... }
+}
+	-------------------------------------------------
+
+22 (Worker2) Check nftables rules by command
+	sudo nft list ruleset | head -50
+	-------------------------------------------------
+	Example Result:
+	-------------------------------------------------
+table ip kube-proxy {
+	chain services {
+		type filter hook prerouting priority -110; policy accept;
+		...
+	}
+	chain service-ips {
+		type nat hook prerouting priority -100; policy accept;
+		ip daddr . meta l4proto . th dport vmap @service-ips
+	}
+	chain nodeport-endpoints-...  { ... }
+}
+	-------------------------------------------------
+	*Remark: kube-proxy's IPVS mode was removed in Kubernetes 1.36 (deprecated since 1.35); nftables is now the recommended mode, replacing both IPVS and legacy iptables.
+
+23. (Master) Test deployment basic nginx pods by command
+kubectl run webtest --image=labdocker/nginx:http2 --port=443
+kubectl get pods -o wide
+
+24. (Master) Expose web outside:
+kubectl expose pods webtest --target-port=443 --type=NodePort
+kubectl get svc -o wide                                           ==> Record Public Port
+
+25. (Master) Test get web outside:
+curl https://$HostnameMaster1:xxxx -k
+curl https://$HostnameWorker1:xxxx -k
+curl https://$HostnameWorker2:xxxx -k
+
+26. (Master) Cleanup Lab by command:
+kubectl delete pods/webtest
+kubectl delete svc/webtest
+
+====================================== Create Gateway API (Apache APISIX) with AWS NLB ====================================================
+
+27. (Master) Install Gateway API CRDs and Apache APISIX with LoadBalancer (AWS NLB) exposure:
+	27.1 Install Gateway API CRDs by command:
+	kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+
+	27.2 Install Apache APISIX by command:
+	helm repo add apisix https://apache.github.io/apisix-helm-chart
+	helm repo update
+	helm install apisix apisix/apisix -n apisix --create-namespace -f ~/kubernetes_202607/WorkShop_2.5_Kubernetes_RealWorld/apisix-aws-values.yml
+	*Remark: If you need to modify config (e.g. NLB annotations), edit this file first:
+	more ~/kubernetes_202607/WorkShop_2.5_Kubernetes_RealWorld/apisix-aws-values.yml
+
+	27.3 Create GatewayClass and Gateway by command (HTTP only - this lab focuses on AWS NLB exposure, not TLS):
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.5_Kubernetes_RealWorld/apisix-gatewayclass-gateway.yml
+	kubectl get gateway -n apisix
+
+	27.4 Check by command:
+	watch kubectl get pods -n=apisix
+
+	27.5 Collect external NLB cname by command:
+	kubectl get svc -n=apisix	(This may take several minute before finished) ==> Record "CNAME of NLB" and input on google sheet
+========================================
+Example:
+NAME             TYPE           CLUSTER-IP     EXTERNAL-IP                                                                          PORT(S)                      AGE
+apisix-gateway   LoadBalancer   10.108.51.60   ae714106db8af4ce2bb437c23cdc0754-a893eb3274461de9.elb.ap-southeast-1.amazonaws.com   80:31465/TCP,443:30536/TCP   100s
+apisix-admin     ClusterIP      10.97.28.203   <none>                                                                               9180/TCP                     100s
+========================================
+
+    27.6 Wait (5 - 10 min) for NLB operate done and check response by command: (Remark: This need some operate on AWS side)
+	curl http://<CNAME of NLB>
+	curl https://<CNAME of NLB> -k
+
+
+28. (Master) Test deploy Gateway API route
+# Create Service/Pods/Deployment for webtest1 and webtest2 by command:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml
+
+# View service for connection by command:
+	kubectl get svc -o wide
+
+# Create HTTPRoute for access by command:
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+	kubectl get httproute -o wide
+	kubectl describe httproute/webtest1-httproute
+
+29. (Master/Local (MAC)) Test access website by command or browser:
+	curl http://<CNAME AWS's NLB> -H 'Host:webtest1.kuberneteslabthailand.com'
+	curl http://<CNAME AWS's NLB> -H 'Host:webtest2.kuberneteslabthailand.com'
+
+30. (Master) Delete HTTPRoute by command:
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest2.yml
+
+31. (Master) Clean Up Lab:
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy.yml
+	kubectl delete -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml

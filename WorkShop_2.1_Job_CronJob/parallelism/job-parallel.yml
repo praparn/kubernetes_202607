@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-parallel
+spec:
+  #completions: 1
+  parallelism: 2
+  #completionMode: Indexed
+  ttlSecondsAfterFinished: 300
+  activeDeadlineSeconds: 600
+  podReplacementPolicy: Failed
+  template:
+    metadata:
+      name: job-parallel
+    spec:
+      containers:
+      - name: worker
+        image: labdocker/redis:worker-test
+      restartPolicy: OnFailure

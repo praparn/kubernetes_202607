@@ -1,0 +1,13 @@
+apiVersion: apisix.apache.org/v1alpha1
+kind: Consumer
+metadata:
+  name: jarvis
+spec:
+  gatewayRef:
+    name: apisix
+    namespace: apisix
+  credentials:
+  - type: key-auth
+    name: jarvis-key-auth
+    secretRef:
+      name: jarvis-key-auth

@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: slacknotify
+  labels:
+    name: slacknotify
+    owner: Praparn_L
+    version: "1.0"
+    module: Job
+    environment: development
+spec:
+  completions: 1
+  parallelism: 1
+  completionMode: Indexed
+  backoffLimitPerIndex: 1  # maximal number of failures per index
+  ttlSecondsAfterFinished: 30
+  activeDeadlineSeconds: 60
+  podReplacementPolicy: Failed
+  template:
+    metadata:
+      name: slacknotify
+    spec:
+      containers:
+      - name: slacknotify
+        image: curlimages/curl:8.14.1
+        env:
+        - name: TITLE
+          value: "BOT:Praparn L."
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: SLACK_WEBHOOK_URL
+          valueFrom:
+            secretKeyRef:
+              name: slack-webhook
+              key: url
+        command:
+        - /bin/sh
+        - -c
+        - |
+          curl -sf -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"${TITLE} One-time notify: Job pod ${POD_NAME} run on node ${NODE_NAME} at $(date)\"}" \
+            "${SLACK_WEBHOOK_URL}"
+      restartPolicy: Never #OnFailure
