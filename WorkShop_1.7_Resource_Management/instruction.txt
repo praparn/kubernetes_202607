@@ -14,44 +14,31 @@ Part0: Create Dashboard
     (Remark: Case to rollback and reinitial helm: helm reset --force)
 
 3. Helm install kubernetes headlamp by command:
-    cd ~/kubernetes_202607/WorkShop_1.7_Resource_Management/
 	helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/ && helm repo update
-    helm install headlamp-monitor headlamp/headlamp --namespace kube-system -f headlamp-values.yaml
+	helm install headlamp-monitor headlamp/headlamp --namespace kubernetes-headlamp --create-namespace --set service.type=NodePort --set service.nodePort=30010
+
+	*Remark: In case rollback: helm delete headlamp-monitor -n=kubernetes-headlamp
 
 4. Check pods status by command:
-    watch kubectl get pods -n=kube-system
-	kubectl get svc -n=kube-system
+    watch kubectl get pods -n=kubernetes-headlamp
+	kubectl get svc -n=kubernetes-headlamp
 
 
 4. Create headlamp admin service account and grant role for access as cluster-admin:
-	kubectl -n kube-system create serviceaccount headlamp-admin
-	kubectl create clusterrolebinding headlamp-admin --serviceaccount=kube-system:headlamp-admin --clusterrole=cluster-admin
-    kubectl create token headlamp-admin -n kube-system
+	kubectl -n kubernetes-headlamp create serviceaccount headlamp-admin
+	kubectl create clusterrolebinding headlamp-admin --serviceaccount=kubernetes-headlamp:headlamp-admin --clusterrole=cluster-admin
+    kubectl create token headlamp-admin -n kubernetes-headlamp
 
 	Ex:
 	------------------------------------------------------------------------------------
-eyJhbGciOiJSUzI1NiIsImtpZCI6IkZrTkFjN296TUxsbmFfZmU0MklfLVdUdnRjQXFyMWJ1TzFLbWRDckU1YncifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXE1Z2Z2Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI1MmNiZjU3NS02Y2ExLTQ3YzQtOWQwOS0zYzg1ZTlmMTkxOTEiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZXJuZXRlcy1kYXNoYm9hcmQ6YWRtaW4tdXNlciJ9.hNxqxqeLK1JxOzK4OYPLbv7FlumBkHrwjL6lDUulaMEU1Iwy1Gq9cJvrLj5dh7xec86PasEckTq1BZo63zOvGBrvjVqH4tTecepQLiY-H584V7bcaY2Ps6hr21DVQEcU_mrJ47KlPMxCbXwrARHaaTMQHIgM1MXE4e8Zsk1FBXMZR9YfxRivyBgmc77hJbbs7VExf8v5_QdJPmq-lFA2-whu4jK7kJ_wFq8Xh_aiHegKbkl61FwfgByZarZMT_dHkt4CVx5XbyvEYd_MSJH9qD0CFsXa-TKgP0MJhqJwHbI0FXpW_gG3XiKIbTK0yKrE1eCpGyvyNSnGCxdPbwWbTA
+eyJhbGciOiJSUzI1NiIsImtpZCI6Im1NSDZ6Qjl3a0c2OUV0TXFJX1lUd0VuQk1LdW5ybFNVVnRtMFdLaTdRU1kifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzg2MTk3Mjc0LCJpYXQiOjE3ODYxOTM2NzQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiYzc0YTY0ZmEtM2FjMS00NjBiLWEzM2QtOGRlNmFmYWNjNTI3Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWhlYWRsYW1wIiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImhlYWRsYW1wLWFkbWluIiwidWlkIjoiNWI5NGMzMWYtZmNiMi00Njg1LWJmYzItNjVmODhhNzE3OWYzIn19LCJuYmYiOjE3ODYxOTM2NzQsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWhlYWRsYW1wOmhlYWRsYW1wLWFkbWluIn0.LJQa-d4pr0XXtG1XSyDVM_NcVKv-6zy9um3HNS3L2bk2ReQyWXwMaeTsChLOKaF0-zcwFbH5U9ELndlMq0jceYtQtumwQFe-8O2GLof8x2hMSCSkITYqGVgMdt4IgCv4JrTUpkarceSglRIzEoAgt9zrr1N6QJmRzrqllurHi081qDGUt9-tXTI4W223zRaQV1KpM_NJ_GU96ypZXZkX1q3fj7ag5ekoHw6HaNmLWL6-1wy8WPoU_J4KYxIUyVOPq3X-0P870TtW63AbCj0YEtZa6rRBZXVTsxSZoKkMgzWnw73NWKqNuCKRCjK10UYODMGZFAbcMC9z7mlOr9Fi-w
 	------------------------------------------------------------------------------------
 
-5. Open Kubernetes's forward for operate:
-	kubectl -n kubernetes-dashboard patch svc kubernetes-dashboard-kong-proxy --type='json' -p '[{"op":"replace","path":"/spec/type","value":"NodePort"},{"op":"replace","path":"/spec/ports/0/nodePort","value":30010}]'
-	kubectl get svc -n=kubernetes-dashboard
+ 5. Open browser for test access
 
 	*Test by open browser: 
-	https://<Public IP>:30010  <== input token on No.4 for test
+	http://<Public IP>:30010  <== input token on No.4 for test
 
-6. Create Generic-Admin for access by command and relogin again:
-	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_1.7_Resource_Management/user-restrict-admin.yml
-	kubectl describe secret kubernetes-dashboard-admin -n kubernetes-dashboard
-	*Remark: Record Token:
-	Ex:
-	------------------------------------------------------------------------------------
-eyJhbGciOiJSUzI1NiIsImtpZCI6IkZrTkFjN296TUxsbmFfZmU0MklfLVdUdnRjQXFyMWJ1TzFLbWRDckU1YncifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuLXE1Z2Z2Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI1MmNiZjU3NS02Y2ExLTQ3YzQtOWQwOS0zYzg1ZTlmMTkxOTEiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZXJuZXRlcy1kYXNoYm9hcmQ6YWRtaW4tdXNlciJ9.hNxqxqeLK1JxOzK4OYPLbv7FlumBkHrwjL6lDUulaMEU1Iwy1Gq9cJvrLj5dh7xec86PasEckTq1BZo63zOvGBrvjVqH4tTecepQLiY-H584V7bcaY2Ps6hr21DVQEcU_mrJ47KlPMxCbXwrARHaaTMQHIgM1MXE4e8Zsk1FBXMZR9YfxRivyBgmc77hJbbs7VExf8v5_QdJPmq-lFA2-whu4jK7kJ_wFq8Xh_aiHegKbkl61FwfgByZarZMT_dHkt4CVx5XbyvEYd_MSJH9qD0CFsXa-TKgP0MJhqJwHbI0FXpW_gG3XiKIbTK0yKrE1eCpGyvyNSnGCxdPbwWbTA
-	------------------------------------------------------------------------------------
-
-7. Relogin kubernetes's dashboard by admin token:
-*Test by open browser: 
-	https://<Public IP>:30010  <== input token on No.4 for test, Try to access hubble-ui for this
 	
 ====================================================
 Part1: Container level configuration:

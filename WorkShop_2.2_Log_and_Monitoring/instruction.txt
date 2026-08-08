@@ -37,15 +37,9 @@ Part1: Container Logging:
 	kubectl logs pods/<pods name> -c cachedb
 
 10. Open kubenetes dashboard by command:
-	kubectl get secret -n kubernetes-dashboard | grep kubernetes-dashboard-admin
-	kubectl describe secret kubernetes-dashboard-admin -n kubernetes-dashboard ==> Record Token
-
+    
 	*Test by open browser: 
-	https://<Public IP>:30010
-
-	*Option: Can kubernetes dashboard for saving resource:
-	helm delete kubernetes-dashboard --namespace kubernetes-dashboard
-	kubectl delete namespace/kubernetes-dashboard
+	http://<Public IP>:30010  <== input token on from workshop 1.7 for test
 	
 
 11. Generate some load by command:
@@ -93,7 +87,7 @@ Part3: Ephemeral Terminate Application:
 ====================================================
 
 1. Create pods from image sample for failing application and check detail by command:
-	kubectl run nginx-bad --image=labdocker/nginx:badversion
+	kubectl run nginx-bad --image=labdocker/nginx:badversion2
 	kubectl get pods
 	kubectl describe pods/nginx-bad
 
