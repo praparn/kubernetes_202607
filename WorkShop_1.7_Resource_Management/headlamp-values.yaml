@@ -272,6 +272,7 @@ service:
   loadBalancerSourceRanges: []
   # -- Kubernetes Service Nodeport
   nodePort: 30010
+  type: NodePort
   # -- Additional ports to expose on the Service in addition to the default
   # http port. Each entry must have a unique `name` and a `port`. `targetPort`
   # defaults to `port` when omitted. `nodePort` is only honored when
