@@ -58,6 +58,7 @@ releases/security patches since March 2026) and is no longer covered by this wor
 7. Create HTTPRoute for access (plain HTTP) by command:
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix-httproute-webtest1.yml
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix-httproute-webtest2.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisixroute.yaml
 	kubectl get httproute
 	kubectl describe httproute/webtest1-httproute
 	kubectl describe httproute/webtest2-httproute

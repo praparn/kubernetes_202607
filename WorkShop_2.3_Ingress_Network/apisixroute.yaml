@@ -1,7 +1,8 @@
 apiVersion: apisix.apache.org/v2
 kind: ApisixRoute
 metadata:
-  name: httpbin-route
+  name: webtest-route
+  namespace: gatewayapi-apisix
 spec:
   http:
     - name: webtest1
