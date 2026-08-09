@@ -1,0 +1,25 @@
+apiVersion: apisix.apache.org/v2
+kind: ApisixRoute
+metadata:
+  name: httpbin-route
+spec:
+  http:
+    - name: webtest1
+      match:
+        hosts:
+          - webtest1.kuberneteslabthailand.com
+        paths:
+          - /*
+      backends:
+        - serviceName: webtest1
+          servicePort: 80
+
+    - name: webtest2
+      match:
+        hosts:
+          - webtest2.kuberneteslabthailand.com
+        paths:
+          - /*
+      backends:
+        - serviceName: webtest2
+          servicePort: 80
