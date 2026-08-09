@@ -28,28 +28,30 @@ releases/security patches since March 2026) and is no longer covered by this wor
 	apisix-gateway    NodePort   10.110.87.52   <none>        80:30074/TCP,443:30761/TCP   9s
 	========================================
 
-3. (Master) Create GatewayClass, Gateway (with HTTP + per-host HTTPS listeners) and the ReferenceGrant that
-   lets the Gateway (namespace "gatewayapi-apisix") use TLS secrets stored in "default" by command:
-	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass-gateway.yml
-	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest1.yml
-	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest2.yml
-	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/referencegrant-tls-secrets.yml
-
-	kubectl get gateway -n apisix
-	kubectl describe gateway/apisix -n apisix		==> Expect all listeners "Programmed: True"
-
-4. Create Service/Pods/Deployment for webtest1 and webtest2 by command:
+3. Create Service/Pods/Deployment for webtest1 and webtest2 by command:
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy.yml
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml
 
-5. View service for connection by command:
+4. View service for connection by command:
 	kubectl get svc -o wide
 
-6. Try to connect for each service via curl by command:
-	kubectl run curl --image=radial/busyboxplus:curl -i --tty
+5. Try to connect for each service via curl and create tls secret by command:
+	kubectl run curl -it --rm --image=curlimages/curl -- sh
 	curl http://webtest1
 	curl http://webtest2
 	exit
+
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest1.yml
+	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest2.yml
+
+6. (Master) Create GatewayClass, Gateway (with HTTP + per-host HTTPS listeners) and the ReferenceGrant that
+   lets the Gateway (namespace "gatewayapi-apisix") use TLS secrets stored in "default" by command:
+
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/referencegrant-tls-secrets.yml
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gateway.yml
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass.yml
+	kubectl get gateway -n apisix
+	kubectl describe gateway/apisix -n apisix		==> Expect all listeners "Programmed: True"
 
 7. Create HTTPRoute for access (plain HTTP) by command:
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/apisix-httproute-webtest1.yml
