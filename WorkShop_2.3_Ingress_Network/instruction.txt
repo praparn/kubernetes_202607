@@ -47,12 +47,13 @@ releases/security patches since March 2026) and is no longer covered by this wor
 6. (Master) Create GatewayClass, Gateway (with HTTP + per-host HTTPS listeners) and the ReferenceGrant that
    lets the Gateway (namespace "gatewayapi-apisix") use TLS secrets stored in "default" by command:
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/referencegrant-tls-secrets.yml
-	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gateway.yml
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass.yml
-	kubectl get gateway -n gatewayapi-apisix
-	kubectl describe gateway/apisix -n gatewayapi-apisix
+	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gateway.yml
 	kubectl get gatewayclass
 	kubectl describe gatewayclass/apisix
+	kubectl get gateway -n gatewayapi-apisix
+	kubectl describe gateway/apisix -n gatewayapi-apisix
+
 
 7. Create HTTPRoute for access (plain HTTP) by command:
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix-httproute-webtest1.yml

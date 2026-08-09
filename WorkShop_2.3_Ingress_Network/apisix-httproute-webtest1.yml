@@ -5,7 +5,7 @@ metadata:
 spec:
   parentRefs:
   - name: apisix
-    namespace: default
+    namespace: gatewayapi-apisix
   hostnames:
   - webtest1.kuberneteslabthailand.com
   rules:
