@@ -4,8 +4,7 @@ metadata:
   name: webtest2-httproute
 spec:
   parentRefs:
-  - name: apisix
-    namespace: gatewayapi-apisix
+  - name: apisixgateway
   hostnames:
   - webtest2.kuberneteslabthailand.com
   rules:

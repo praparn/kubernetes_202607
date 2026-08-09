@@ -1,8 +1,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: apisix
-  namespace: gatewayapi-apisix
+  name: apisixgateway
+  namespace: default
 spec:
   gatewayClassName: apisix
   listeners:
@@ -12,32 +12,32 @@ spec:
     allowedRoutes:
       namespaces:
         from: All
-  #- name: https-webtest1
-  #  protocol: HTTPS
-  #  port: 443
-  #  hostname: webtest1.kuberneteslabthailand.com
-  #  tls:
-  #    certificateRefs:
-  #    - kind: Secret
-  #      name: webtest1secret
-  #      namespace: default
-  #  allowedRoutes:
-  #    namespaces:
-  #      from: All
-  #- name: https-webtest2
-  #  protocol: HTTPS
-  #  port: 443
-  #  hostname: webtest2.kuberneteslabthailand.com
-  #  tls:
-  #    certificateRefs:
-  #    - kind: Secret
- #       name: webtest2secret
- #       namespace: default
- #   allowedRoutes:
- #     namespaces:
- #       from: All
- # infrastructure:
- #   parametersRef:
- #     group: apisix.apache.org
- #     kind: GatewayProxy
- #     name: apisix-config
+  - name: https-webtest1
+    protocol: HTTPS
+    port: 443
+    hostname: webtest1.kuberneteslabthailand.com
+    tls:
+      certificateRefs:
+      - kind: Secret
+        name: webtest1secret
+        namespace: default
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https-webtest2
+    protocol: HTTPS
+    port: 443
+    hostname: webtest2.kuberneteslabthailand.com
+    tls:
+      certificateRefs:
+      - kind: Secret
+        name: webtest2secret
+        namespace: default
+    allowedRoutes:
+      namespaces:
+        from: All
+  infrastructure:
+    parametersRef:
+      group: apisix.apache.org
+      kind: GatewayProxy
+      name: apisix-config
