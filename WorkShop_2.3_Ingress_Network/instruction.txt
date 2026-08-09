@@ -51,8 +51,8 @@ releases/security patches since March 2026) and is no longer covered by this wor
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gateway.yml
 	kubectl get gatewayclass
 	kubectl describe gatewayclass/apisix
-	kubectl get gateway -n gatewayapi-apisix
-	kubectl describe gateway/apisix -n gatewayapi-apisix
+	kubectl get gateway
+	kubectl describe gateway/apisixgateway
 
 
 7. Create HTTPRoute for access (plain HTTP) by command:
@@ -69,7 +69,7 @@ releases/security patches since March 2026) and is no longer covered by this wor
 9. Add Hosts (/etc/hosts) or (c:\windows\system32\driver\etc\hosts) with node IP by command:
 	For Windows:
 		<Public IP> webtest1.kuberneteslabthailand.com webtest2.kuberneteslabthailand.com
-
+ 
 	For Mac:
 	echo "<Public IP> webtest1.kuberneteslabthailand.com webtest2.kuberneteslabthailand.com" | sudo tee -a /private/etc/hosts
 
