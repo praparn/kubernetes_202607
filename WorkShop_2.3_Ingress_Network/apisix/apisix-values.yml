@@ -12,4 +12,6 @@ ingress-controller:
       enableGatewayAPI: true
 
 etcd:
-  enabled: false
+  enabled: true
+  persistence:
+    enabled: false

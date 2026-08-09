@@ -13,11 +13,15 @@ releases/security patches since March 2026) and is no longer covered by this wor
 
 	helm repo add apisix https://apache.github.io/apisix-helm-chart
 	helm repo update
-	helm install apisix apisix/apisix -n apisix --create-namespace -f ~/kubernetes_202607/WorkShop_2.3_Ingress_Network/apisix/apisix-values.yml
+	helm install apisix apisix/apisix -n gatewayapi-apisix --create-namespace -f ~/kubernetes_202607/WorkShop_2.3_Ingress_Network/apisix/apisix-values.yml
+
+	*Remark: Case rollback
+	helm delete apisix -n=gatewayapi-apisix
+	helm delete namespace/gatewayapi-apisix
 
 2. (Master) Check running pods and service, record the NodePort assigned for HTTP by command:
-	kubectl get pods -n apisix
-	kubectl get svc -n apisix		==> Record NodePort for "apisix-gateway" service (port 80 -> <NodePort>)
+	watch kubectl get pods -n gatewayapi-apisix
+	kubectl get svc -n gatewayapi-apisix		==> Record NodePort for "apisix-gateway" service (port 80 -> <NodePort>)
 	========================================
 	Example:
 	NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
@@ -25,7 +29,7 @@ releases/security patches since March 2026) and is no longer covered by this wor
 	========================================
 
 3. (Master) Create GatewayClass, Gateway (with HTTP + per-host HTTPS listeners) and the ReferenceGrant that
-   lets the Gateway (namespace "apisix") use TLS secrets stored in "default" by command:
+   lets the Gateway (namespace "gatewayapi-apisix") use TLS secrets stored in "default" by command:
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass-gateway.yml
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest1.yml
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/ingress_webtest_tls_secret_webtest2.yml
