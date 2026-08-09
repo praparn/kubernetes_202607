@@ -1,16 +1,16 @@
-# Same HTTPRoute as apisix-httproute-webtest1.yml, now with key-auth enforced
+# Same HTTPRoute as apisix-httproute-webtest2.yml, now with key-auth enforced
 # via the jarvis-key-auth PluginConfig. Re-apply this file over the existing
-# webtest1-httproute to turn authentication on for that route.
+# webtest2-httproute to turn authentication on for that route.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: webtest1-httproute
+  name: webtest2-httproute
 spec:
   parentRefs:
   - name: apisix
-    namespace: apisix
+    namespace: default
   hostnames:
-  - webtest1.kuberneteslabthailand.com
+  - webtest2.kuberneteslabthailand.com
   rules:
   - matches:
     - path:
@@ -23,6 +23,6 @@ spec:
         kind: PluginConfig
         name: jarvis-key-auth
     backendRefs:
-    - name: webtest1
+    - name: webtest2
       kind: Service
       port: 80
