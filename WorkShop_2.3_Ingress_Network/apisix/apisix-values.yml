@@ -10,3 +10,6 @@ ingress-controller:
   config:
     kubernetes:
       enableGatewayAPI: true
+
+etcd:
+  enabled: false

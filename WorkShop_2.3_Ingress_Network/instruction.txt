@@ -5,7 +5,7 @@ releases/security patches since March 2026) and is no longer covered by this wor
 --------------------------------------------------------------------------
 0. (Master) Install Gateway API CRDs (required before installing any Gateway API implementation):
 	kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
-	kubectl get gatewayclass
+	kubectl get crd
 
 1. (Master) Install Apache APISIX with the Ingress Controller in Gateway API mode by command:
 	*Remark: in case you never install helm before please follow command below as pre-require:
