@@ -3,4 +3,4 @@ kind: GatewayClass
 metadata:
   name: apisix-gateway-class
 spec:
-  controllerName: apisix.apache.org/gateway-controller
+  controllerName: apisix.apache.org/apisix-ingress-controller

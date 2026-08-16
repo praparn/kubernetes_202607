@@ -12,6 +12,11 @@ spec:
     allowedRoutes:
       namespaces:
         from: All
+  infrastructure:
+    parametersRef:
+      group: apisix.apache.org
+      kind: GatewayProxy
+      name: apisix-config
 
 #  - name: https-webtest1
 #    protocol: HTTPS

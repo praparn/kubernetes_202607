@@ -33,7 +33,7 @@ releases/security patches since March 2026) and is no longer covered by this wor
 	kubectl create -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/webtest_deploy2.yml
 
 4. View service for connection by command:
-	kubectl get svc -o wide
+	c
 
 5. Try to connect for each service via curl and create tls secret by command:
 	kubectl run curl -it --rm --image=curlimages/curl -- sh
@@ -50,9 +50,9 @@ releases/security patches since March 2026) and is no longer covered by this wor
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gatewayclass.yml
 	kubectl apply -f https://raw.githubusercontent.com/praparn/kubernetes_202607/master/WorkShop_2.3_Ingress_Network/apisix/gateway.yml
 	kubectl get gatewayclass
-	kubectl describe gatewayclass/apisix
-	kubectl get gateway
-	kubectl describe gateway/apisixgateway
+	kubectl describe gatewayclass/apisix-gateway-class
+	kubectl get gateway -n=gatewayapi-apisix
+	kubectl describe gateway/apisixgateway -n=gatewayapi-apisix
 
 
 7. Create HTTPRoute for access (plain HTTP) by command:
