@@ -10,6 +10,13 @@ ingress-controller:
   config:
     kubernetes:
       enableGatewayAPI: true
+      ingressClass: apisix-gateway
+
+apisix:
+  deployment:
+    role: traditional
+    role_traditional:
+      config_provider: yaml
 
 etcd:
   enabled: true

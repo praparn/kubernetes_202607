@@ -1,0 +1,22 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: apisix-gateway-class
+spec:
+  # This matches the internal controller name used by APISIX
+  controllerName: apisix.apache.org/gateway-controller
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: private-gateway
+  namespace: apisix-gateway-api
+spec:
+  gatewayClassName: apisix-gateway-class
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All

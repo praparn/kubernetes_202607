@@ -1,0 +1,36 @@
+service:
+  type: LoadBalancer
+
+replicaCount: 3
+
+etcd:
+  enabled: false
+
+apisix:
+  #ssl:
+  #  enabled: true
+  #  containerPort: 9443
+  deployment:
+    role: traditional
+    role_traditional:
+      config_provider: yaml
+
+ingress-controller:
+  gatewayProxy:
+    createDefault: true
+  apisix:
+    adminService:
+      namespace: ingress-apisix
+  enabled: true
+  config:
+    provider:
+      type: apisix-standalone
+    apisix:
+      # Ensure the controller points to the internal service name created by the chart
+      serviceName: apisix-admin 
+      serviceNamespace: ingress-apisix # Change this if you install in a different namespace
+    kubernetes:
+      ingressClass: apisix
+      defaultIngressClass: true
+      # If this is your only ingress controller, keeping this true is helpful
+      watchEndpointSlices: true

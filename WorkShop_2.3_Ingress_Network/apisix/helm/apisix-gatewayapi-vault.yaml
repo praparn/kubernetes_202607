@@ -1,0 +1,30 @@
+# Use a different namespace to keep things separate
+# (Recommended: install via helm -n apisix-gateway-api)
+
+service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal" # Private NLB
+
+apisix:
+  deployment:
+    role: traditional
+    role_traditional:
+      config_provider: yaml
+
+ingress-controller:
+  enabled: true
+  config:
+    kubernetes:
+      # 1. Enable Gateway API
+      enableGatewayApi: true 
+      # 2. Change the IngressClass to avoid conflict with your current one
+      ingressClass: apisix-gateway 
+      # 3. Disable defaultIngressClass so it doesn't try to take over 'apisix'
+      defaultIngressClass: false 
+    apisix:
+      serviceName: apisix-admin
+      # Match the new namespace you choose for this installation
+      serviceNamespace: apisix-gateway-api

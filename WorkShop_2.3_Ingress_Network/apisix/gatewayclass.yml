@@ -1,6 +1,6 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
-  name: apisix
+  name: apisix-gateway-class
 spec:
-  controllerName: apisix.apache.org/apisix-ingress-controller
+  controllerName: apisix.apache.org/gateway-controller
